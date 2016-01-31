@@ -216,6 +216,8 @@ int main(int argc, char ** argv)
          codebuf[i]=pointprebuf[i];                                  
     }
    
+    if (InitGSComms()) return 1;
+
     /*Upload binary to specified address.*/
     if(UploadFile(infile,UPLOAD_ADDR))
     {
@@ -254,6 +256,8 @@ int main(int argc, char ** argv)
        Out32(LPT1, 0);
        return 1;    
     }
+
+    if (CloseGSComms()) return 1;
 
     printf("Done.\n");
     fclose(infile);
@@ -326,7 +330,6 @@ int InitGSComms(void) {
                 timeout--;
         }
         if (!timeout) {printf("init failed\n"); return 1;}
-        if (!CheckGSPresence()) {printf("init failed2\n"); return 1;}
  
     return 0;
 }
@@ -342,8 +345,8 @@ int CloseGSComms(void) {
 int Read(unsigned char * buffer, unsigned long size, unsigned long address) {
         unsigned long c=0;
        
-        if (InitGSComms()) return 1;
        
+        if (!CheckGSPresence()) {printf("init failed2\n"); return 1;}
         ReadWriteByte(1);
         ReadWrite32(address);
         ReadWrite32(size);
@@ -352,7 +355,6 @@ int Read(unsigned char * buffer, unsigned long size, unsigned long address) {
  
         for (c=0; c < 8; c++) ReadWriteByte(0);
  
-        if (CloseGSComms()) return 1;
        
         return 0;
 }
@@ -361,8 +363,8 @@ int Read(unsigned char * buffer, unsigned long size, unsigned long address) {
 int Upload(const unsigned char * buffer, unsigned long size, unsigned long address) {
         unsigned long c=0;
        
-        if (InitGSComms()) return 1;
  
+        if (!CheckGSPresence()) {printf("init failed2\n"); return 1;}
         ReadWriteByte(2);
         ReadWrite32(address);
         ReadWrite32(size);
@@ -371,7 +373,6 @@ int Upload(const unsigned char * buffer, unsigned long size, unsigned long addre
  
         for (c=0; c < 8; c++) ReadWriteByte(0);
  
-        if (CloseGSComms()) return 1;
        
         return 0;
 }
@@ -385,11 +386,11 @@ int UploadFile(FILE * infile, unsigned long address) {
         size=ftell(infile);
         rewind(infile);
  
-        if (InitGSComms()) return 1;
        
     printf("Uploading File to %x | 00%%", (int)address);
  
-    ReadWriteByte(2);
+        if (!CheckGSPresence()) {printf("init failed2\n"); return 1;}
+        ReadWriteByte(2);
         ReadWrite32(address);
         ReadWrite32(size);
        
@@ -401,7 +402,6 @@ int UploadFile(FILE * infile, unsigned long address) {
  
         for (c=0; c < 8; c++) ReadWriteByte(0);
  
-        if (CloseGSComms()) return 1;
    
         printf("\b\b\bDone.\n");
        
